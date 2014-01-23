@@ -1,3 +1,4 @@
+require 'scraperwiki'
 require 'mechanize'
 
 url = "http://www.yarracity.vic.gov.au/Planning-Application-Search/Results.aspx?ApplicationNumber=&Suburb=(All)&Street=(All)&Status=Current&Ward=(All)"
@@ -29,7 +30,7 @@ def get_page_data(page)
       # In case the date is invalid
     end
 
-    if ScraperWiki.select("* from swdata where `council_reference`='#{record['council_reference']}'").empty? 
+    if ScraperWiki.select("* from data where `council_reference`='#{record['council_reference']}'").empty? 
       ScraperWiki.save_sqlite(['council_reference'], record)
     else
       puts "Skipping already saved record " + record['council_reference']
