@@ -10,7 +10,7 @@ end
 def get_page_data(page)
   comment_url = "http://www.yarracity.vic.gov.au/planning--building/Planning-applications/Objecting-to-a-planning-applicationVCAT/"
 
-  trs = page.search('table tr')
+  trs = page.search('table#ContentPlaceHolder_dgResults/tr')
   trs[1..-2].each do |tr|
     texts = tr.search('td').map{|n| n.inner_text}
     council_reference = clean_whitespace(texts[0])
