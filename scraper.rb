@@ -10,7 +10,7 @@ end
 def get_page_data(page)
   comment_url = "http://www.yarracity.vic.gov.au/planning--building/Planning-applications/Objecting-to-a-planning-applicationVCAT/"
 
-  trs = page.search('table tr')
+  trs = page.search('table#ContentPlaceHolder_dgResults/tr')
   trs[1..-2].each do |tr|
     texts = tr.search('td').map{|n| n.inner_text}
     council_reference = clean_whitespace(texts[0])
@@ -56,10 +56,11 @@ begin
   end
   if link
     href = link["href"]
-    first_argument = href.match(/javascript:__doPostBack\('(.*)',''\)/)[1]
+    matches = href.match(/javascript:__doPostBack\('(.*)','(.*)'\)/)
     # We're faking what the __doPostBack javascript does
     form = page.forms.first
-    form["__EVENTTARGET"] = first_argument
+    form["__EVENTTARGET"] = matches[1]
+    form["__EVENTARGUMENT"] = matches[2]
     page = form.submit
     current_page += 1
   end
