@@ -41,6 +41,7 @@ def get_page_data(page)
 end
 
 agent = Mechanize.new
+agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
 page = agent.get(url)
 
