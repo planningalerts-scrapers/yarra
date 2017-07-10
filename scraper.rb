@@ -8,7 +8,7 @@ def clean_whitespace(a)
 end
 
 def get_page_data(page)
-  comment_url = "http://www.yarracity.vic.gov.au/planning--building/Planning-applications/Objecting-to-a-planning-applicationVCAT/"
+  comment_url = "mailto:info@yarracity.vic.gov.au"
 
   trs = page.search('table#ContentPlaceHolder_dgResults/tr')
   trs[1..-2].each do |tr|
