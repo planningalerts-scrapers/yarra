@@ -1,20 +1,22 @@
 require 'scraperwiki'
 require 'mechanize'
 
-url = "http://www.yarracity.vic.gov.au/Planning-Application-Search/Results.aspx?ApplicationNumber=&Suburb=(All)&Street=(All)&Status=Current&Ward=(All)"
+url_base = "https://www.yarracity.vic.gov.au/planning-application-search"
+url = url_base + "?suburb=(All)&street=(All)&status=Current&ward=(All)"
 
 def clean_whitespace(a)
   a.gsub("\r", ' ').gsub("\n", ' ').squeeze(" ").strip
 end
 
-def get_page_data(page)
-  comment_url = "http://www.yarracity.vic.gov.au/planning--building/Planning-applications/Objecting-to-a-planning-applicationVCAT/"
+def get_page_data(page, url_base)
+  comment_url = "mailto:info@yarracity.vic.gov.au"
 
-  trs = page.search('table#ContentPlaceHolder_dgResults/tr')
-  trs[1..-2].each do |tr|
+  trs = page.search('table.search tbody tr')
+  trs.each do |tr|
     texts = tr.search('td').map{|n| n.inner_text}
     council_reference = clean_whitespace(texts[0])
-    info_url = "http://www.yarracity.vic.gov.au/Planning-Application-Search/Results.aspx?ApplicationNumber=#{council_reference}&Suburb=(All)&Street=(All)&Status=(All)&Ward=(All)"
+
+    info_url = url_base + "?applicationNumber=#{council_reference}"
     record = {
       'info_url' => info_url,
       'comment_url' => comment_url,
@@ -30,39 +32,33 @@ def get_page_data(page)
       # In case the date is invalid
     end
 
-    if ScraperWiki.select("* from data where `council_reference`='#{record['council_reference']}'").empty? 
+    if ( ScraperWiki.select("* from data where `council_reference`='#{record['council_reference']}'").empty? rescue true )
+      puts "Saving record " + council_reference + " - " + record['address']
+#       puts record
       ScraperWiki.save_sqlite(['council_reference'], record)
     else
-      puts "Skipping already saved record " + record['council_reference']
+      puts "Skipping already saved record " + record['council_reference'] + " - " + record['address']
     end
   end
 end
 
 agent = Mechanize.new
+agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-page = agent.get(url)
+page = agent.get url
 
-current_page = 1
 begin
-  get_page_data(page)
+  get_page_data(page, url_base)
 
   # Click on the link to the next page
-  links = page.search('table tr')[-1].search('a')
-  link = links.find{|a| a.inner_text.to_i == current_page + 1}
-  # This page has a really odd paging mechanism
-  if link.nil? 
-    # Ignore the first link in case it's a "..." as well that will go back rather than forward
-    link = links[1..-1].find{|a| a.inner_text == "..."}
-  end
+  links = page.search('div.pagination-container').search('a')
+  link = links.find{|a| a.inner_text == 'Next'}
+
   if link
-    href = link["href"]
-    matches = href.match(/javascript:__doPostBack\('(.*)','(.*)'\)/)
-    # We're faking what the __doPostBack javascript does
-    form = page.forms.first
-    form["__EVENTTARGET"] = matches[1]
-    form["__EVENTARGUMENT"] = matches[2]
-    page = form.submit
-    current_page += 1
+    puts url_base + link["href"]
+    page = agent.get (url_base + link["href"])
   end
+  # end
+
 end while link
 
