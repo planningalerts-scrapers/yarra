@@ -32,13 +32,9 @@ def get_page_data(page, url_base)
       # In case the date is invalid
     end
 
-    if ( ScraperWiki.select("* from data where `council_reference`='#{record['council_reference']}'").empty? rescue true )
-      puts "Saving record " + council_reference + " - " + record['address']
+    puts "Saving record " + council_reference + " - " + record['address']
 #       puts record
-      ScraperWiki.save_sqlite(['council_reference'], record)
-    else
-      puts "Skipping already saved record " + record['council_reference'] + " - " + record['address']
-    end
+    ScraperWiki.save_sqlite(['council_reference'], record)
   end
 end
 
